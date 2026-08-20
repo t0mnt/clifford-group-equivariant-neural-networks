@@ -70,9 +70,9 @@ class FullyConnectedSteerableGeometricProductLayer(nn.Module):
         weight = self._get_weight()
 
         if self.include_first_order:
+            outer = torch.einsum("bnk,bni->bnki", input_right, input)
             return (
                 self.linear_left(input)
-                outer = torch.einsum("bnk,bni->bnki", input_right, input)
                 + torch.einsum("bnki,mnijk->bmj", outer, weight)
             ) / math.sqrt(2)
         else:
