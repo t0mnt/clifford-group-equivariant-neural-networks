@@ -17,6 +17,7 @@ def main(config):
     model_config = config["model"]
     model_module = engineer.load_module(model_config.pop("module"))
     model = model_module(**model_config)
+    compile_model = model_config.pop("compile", False)
     if config.get("compile", False):
         model.compile(dynamic=True)   # dynamic=True since batch shapes vary per step here 
     
