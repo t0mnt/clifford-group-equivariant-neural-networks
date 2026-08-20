@@ -56,6 +56,26 @@ class CliffordAlgebra(nn.Module):
             torch.pow(-1, self.bbo_grades * (self.bbo_grades + 1) // 2),
             persistent=False,
         )
+                # ---- sparse-GP support: one-output-blade structure + the blade bijection ----
+        # invariant 1: at most one nonzero output blade per (i, j) -- any diagonal metric
+        assert ((cayley != 0).sum(-1) <= 1).all(), \
+            "cayley lost the one-nonzero-per-(i,j) property"
+        gp_k_idx = cayley.abs().argmax(dim=-1)                    # k(i, j)
+        self.register_buffer("gp_k_idx", gp_k_idx, persistent=False)
+        self.register_buffer(
+            "gp_sign",
+            torch.gather(cayley, -1, gp_k_idx.unsqueeze(-1)).squeeze(-1),
+            persistent=False,
+        )
+        # invariant 2: for fixed i, j -> k(i, j) is a bijection. HOLDS iff the metric has
+        # no zero entries (left mult by a basis blade is then a signed basis permutation).
+        # Degenerate algebras (PGA etc.) FAIL HERE, on purpose: the sparse backward's
+        # dL/dy inverts this map, so those algebras must keep gp_impl="einsum".
+        _ar = torch.arange(self.n_blades)
+        assert (gp_k_idx.sort(-1).values == _ar).all(), (
+            "metric has a zero entry (degenerate algebra): j->k is not a bijection, "
+            "gp_impl='sparse' is unsupported here -- use the default einsum")
+        self.register_buffer("gp_j_idx", gp_k_idx.argsort(-1), persistent=False)
 
     def geometric_product(self, a, b, blades=None):
         cayley = self.cayley
