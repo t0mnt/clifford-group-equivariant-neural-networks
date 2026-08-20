@@ -58,9 +58,9 @@ class SteerableGeometricProductLayer(nn.Module):
         weight = self._get_weight()
 
         if self.include_first_order:
+            outer = torch.einsum("bnk,bni->bnki", input_right, input)
             return (
                 self.linear_left(input)
-                outer = torch.einsum("bnk,bni->bnki", input_right, input)
                 + torch.einsum("bnki,nijk->bnj", outer, weight)
             ) / math.sqrt(2)
 
