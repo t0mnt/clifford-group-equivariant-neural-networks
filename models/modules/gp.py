@@ -44,7 +44,7 @@ class SteerableGeometricProductLayer(nn.Module):
             dtype=self.weight.dtype,
             device=self.weight.device,
         )
-        weight[:, :, self._path_idx[0], self._path_idx[1], self._path_idx[2]] = self.weight
+        weight[:, self._path_idx[0], self._path_idx[1], self._path_idx[2]] = self.weight
         bsi = self.algebra.blade_subspace_idx
         weight_repeated = (
             weight.index_select(-3, bsi).index_select(-2, bsi).index_select(-1, bsi)
